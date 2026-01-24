@@ -19,17 +19,20 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        AuthenticationManager authenticationManager,
                        UserDetailsService userDetailsService,
-                       JwtService jwtService) {
+                       JwtService jwtService,
+                       RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     public void register(RegisterRequest request) {
@@ -40,14 +43,13 @@ public class AuthService {
         User user = new User(
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
-                Role.USER // registracija uvijek USER
+                Role.USER
         );
 
         userRepository.save(user);
     }
 
     public AuthResponse login(LoginRequest request) {
-        // ovo provjeri password i baci exception ako je krivo
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
@@ -57,8 +59,26 @@ public class AuthService {
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
 
-        String token = jwtService.generateToken(userDetails, user.getRole().name());
+        String accessToken = jwtService.generateToken(userDetails, user.getRole().name());
+        String refreshToken = refreshTokenService.createRefreshToken(user);
 
-        return new AuthResponse(token);
+        return new AuthResponse(accessToken, refreshToken);
+    }
+
+    public AuthResponse refresh(String refreshToken) {
+        User user = refreshTokenService.validateAndGetUser(refreshToken);
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        String newAccess = jwtService.generateToken(userDetails, user.getRole().name());
+
+        // rotation LIGHT verzija: revoke stari + izdaj novi
+        refreshTokenService.revoke(refreshToken);
+        String newRefresh = refreshTokenService.createRefreshToken(user);
+
+        return new AuthResponse(newAccess, newRefresh);
+    }
+
+    public void logout(String refreshToken) {
+        refreshTokenService.revoke(refreshToken);
     }
 }
