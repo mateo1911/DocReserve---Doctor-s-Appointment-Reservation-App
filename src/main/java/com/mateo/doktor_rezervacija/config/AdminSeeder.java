@@ -24,9 +24,9 @@ public class AdminSeeder {
                         passwordEncoder.encode("admin123"),
                         Role.ADMIN
                 ));
-                System.out.println("✅ ADMIN seedan: " + email + " / admin123");
+                System.out.println(" ADMIN seedan: " + email + " / admin123");
             } else {
-                System.out.println("ℹ️ ADMIN već postoji: " + email);
+                System.out.println("ℹADMIN već postoji: " + email);
             }
         };
     }
