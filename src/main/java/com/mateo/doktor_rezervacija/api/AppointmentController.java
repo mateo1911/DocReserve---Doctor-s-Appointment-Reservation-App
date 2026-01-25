@@ -29,21 +29,37 @@ public class AppointmentController {
 
     @GetMapping("/api/user/appointments")
     public List<AppointmentResponse> getAllForUser() {
-        return appointmentService.findAll().stream().map(this::map).toList();
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        return appointmentService.findAllForUser(email).stream()
+                .map(this::map)
+                .toList();
     }
 
     @GetMapping("/api/user/appointments/{id}")
     public AppointmentResponse getById(@PathVariable Long id) {
-        return map(appointmentService.findById(id));
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return map(appointmentService.findByIdForUser(id, email));
     }
 
+
     @PutMapping("/api/user/appointments/{id}")
-    public AppointmentResponse update(@PathVariable Long id, @Valid @RequestBody AppointmentUpdateRequest req) {
+    public AppointmentResponse update(@PathVariable Long id,
+                                      @Valid @RequestBody AppointmentUpdateRequest req) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        appointmentService.findByIdForUser(id, email); // ownership check
+
         return map(appointmentService.update(id, req.getStartTime(), req.getNote()));
     }
 
+
     @DeleteMapping("/api/user/appointments/{id}")
     public void delete(@PathVariable Long id) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        appointmentService.findByIdForUser(id, email); // ownership check
+
         appointmentService.delete(id);
     }
 

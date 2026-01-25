@@ -8,6 +8,7 @@ import com.mateo.doktor_rezervacija.repository.DoctorRepository;
 import com.mateo.doktor_rezervacija.user.User;
 import com.mateo.doktor_rezervacija.user.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -62,4 +63,14 @@ public class AppointmentService {
         }
         appointmentRepository.deleteById(id);
     }
+    public List<Appointment> findAllForUser(String email) {
+        return appointmentRepository.findByUserEmail(email);
+    }
+
+    public Appointment findByIdForUser(Long id, String email) {
+        return appointmentRepository.findByIdAndUserEmail(id, email)
+                .orElseThrow(() -> new AccessDeniedException("Access denied"));
+    }
+
+
 }
