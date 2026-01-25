@@ -31,6 +31,8 @@ public class SecurityConfig {
                 .formLogin(fl -> fl.disable())
                 .authorizeHttpRequests(auth -> auth
                         // auth i swagger moraju biti javni
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(
                                 "/v3/api-docs/**",
